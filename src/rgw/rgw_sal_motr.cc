@@ -1260,7 +1260,7 @@ int MotrObject::create_mobj(const DoutPrefixProvider *dpp, uint64_t sz)
 
   this->obj_name_to_motr_fid(&fid);
 
-  char fid_str[40];
+  char fid_str[M0_FID_STR_LEN];
   snprintf(fid_str, ARRAY_SIZE(fid_str), U128X_F, U128_P(&fid));
   ldpp_dout(dpp, 20) << __func__ << ": sz=" << sz << " fid=" << fid_str << dendl;
 
@@ -1304,7 +1304,7 @@ int MotrObject::open_mobj(const DoutPrefixProvider *dpp)
 {
   this->obj_name_to_motr_fid(&fid);
 
-  char fid_str[40];
+  char fid_str[M0_FID_STR_LEN];
   snprintf(fid_str, ARRAY_SIZE(fid_str), U128X_F, U128_P(&fid));
   ldpp_dout(dpp, 20) << __func__ << ": fid=" << fid_str << dendl;
 
@@ -1852,7 +1852,7 @@ int MotrAtomicWriter::write()
     if (rc == -EEXIST)
       rc = obj.open_mobj(dpp);
     if (rc != 0) {
-      char fid_str[40];
+      char fid_str[M0_FID_STR_LEN];
       snprintf(fid_str, ARRAY_SIZE(fid_str), U128X_F, U128_P(&obj.fid));
       ldpp_dout(dpp, 0) << "ERROR: failed to create/open motr object "
                         << fid_str << " (" << obj.get_bucket()->get_name()
@@ -3320,6 +3320,15 @@ int MotrStore::check_n_create_global_indices()
   }
 
   return rc;
+}
+
+std::string MotrStore::get_cluster_id(const DoutPrefixProvider* dpp,  optional_yield y)
+{
+  char id[M0_FID_STR_LEN];
+  struct m0_confc *confc = m0_reqh2confc(&instance->m0c_reqh);
+
+  m0_fid_print(id, ARRAY_SIZE(id), &confc->cc_root->co_id);
+  return std::string(id);
 }
 
 } // namespace rgw::sal
