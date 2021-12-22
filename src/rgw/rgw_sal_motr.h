@@ -770,6 +770,10 @@ class MotrStore : public Store {
     MotrStore(CephContext *c): zone(this), cctx(c) {}
     ~MotrStore() { ; }
 
+    virtual const char* get_name() const override {
+      return "motr";
+    }
+
     virtual std::unique_ptr<User> get_user(const rgw_user& u) override;
     virtual int get_user_by_access_key(const DoutPrefixProvider *dpp, const string& key, optional_yield y, std::unique_ptr<User>* user) override;
     virtual int get_user_by_email(const DoutPrefixProvider *dpp, const string& email, optional_yield y, std::unique_ptr<User>* user) override;

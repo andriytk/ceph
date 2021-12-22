@@ -244,7 +244,7 @@ class Store {
     Store() {}
     virtual ~Store() = default;
 
-    /** Name of this store provider (e.g., RADOS") */
+    /** Name of this store provider (e.g., "rados") */
     virtual const char* get_name() const = 0;
     /** Get cluster unique identifier */
     virtual std::string get_cluster_id(const DoutPrefixProvider* dpp,  optional_yield y) = 0;
