@@ -117,6 +117,7 @@ rgw::sal::Store* StoreManager::init_storage_provider(const DoutPrefixProvider* d
       ldpp_dout(dpp, 0) << "newMotrStore() failed!" << dendl;
       return store;
     }
+    ((rgw::sal::MotrStore *)store)->init_metadata_cache(dpp, cct);
 
     /* XXX: temporary - create testid user */
     ldpp_dout(dpp, 0) << "Create testid and user for Motr" << dendl;

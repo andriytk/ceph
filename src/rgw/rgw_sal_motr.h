@@ -51,6 +51,72 @@ class MotrStore;
 #define RGW_MOTR_BUCKET_HD_IDX_NAME   "motr.rgw.bucket.headers"
 //#define RGW_MOTR_BUCKET_ACL_IDX_NAME  "motr.rgw.bucket.acls"
 
+// A simplified metadata cache implementation.
+// Note: MotrObjMetaCache doesn't handle the IO operations to Motr. A proxy
+// class can be added to handle cache and 'real' ops.
+class MotrMetaCache
+{
+protected:
+  // MGW re-uses ObjectCache to cache object's metadata as it has already
+  // implemented a lru cache: (1) ObjectCache internally uses a map and lru
+  // list to manage cache entry. POC uses object name, user name or bucket
+  // name as the key to lookup and insert an entry. (2) ObjectCache::data is
+  // a bufferlist and can be used to store any metadata structure, such as
+  // object's bucket dir entry, user info or bucket instance.
+  //
+  // Note from RGW:
+  // The Rados Gateway stores metadata and objects in an internal cache. This
+  // should be kept consistent by the OSD's relaying notify events between
+  // multiple watching RGW processes. In the event that this notification
+  // protocol fails, bounding the length of time that any data in the cache will
+  // be assumed valid will ensure that any RGW instance that falls out of sync
+  // will eventually recover. This seems to be an issue mostly for large numbers
+  // of RGW instances under heavy use. If you would like to turn off cache expiry,
+  // set this value to zero.
+  //
+  // Currently POC hasn't implemented the watch-notify menchanism yet. So the
+  // current implementation is similar to cortx-s3server which is based on expiry
+  // time. TODO: see comments on distribute_cache).
+  //
+  // Beaware: Motr object data is not cached in current POC as RGW!
+  // RGW caches the first chunk (4MB by default).
+  ObjectCache cache;
+
+public:
+  // Lookup a cache entry.
+  int get(const DoutPrefixProvider *dpp, const string& name, bufferlist& data);
+
+  // Insert a cache entry.
+  int put(const DoutPrefixProvider *dpp, const string& name, const bufferlist& data);
+
+  // Called when an object is deleted. Notification should be sent to other
+  // RGW instances.
+  int remove(const DoutPrefixProvider *dpp, const string& name);
+
+  // Make the local cache entry invalid.
+  void invalid(const DoutPrefixProvider *dpp, const string& name);
+
+  // TODO: Distribute_cache() and watch_cb() now are only place holder functions.
+  // Checkout services/svc_sys_obj_cache.h/cc for reference.
+  // These 2 functions are designed to notify or to act on cache notification.
+  // It is feasible to implement the functionality using Motr's FDMI after discussing
+  // with Hua.
+  int distribute_cache(const DoutPrefixProvider *dpp,
+                       const string& normal_name,
+                       ObjectCacheInfo& obj_info, int op);
+  int watch_cb(const DoutPrefixProvider *dpp,
+               uint64_t notify_id,
+               uint64_t cookie,
+               uint64_t notifier_id,
+               bufferlist& bl);
+
+  void set_enabled(bool status);
+
+  MotrMetaCache(const DoutPrefixProvider *dpp, CephContext *cct) {
+    cache.set_ctx(cct);
+  }
+};
+
 struct MotrUserInfo {
   RGWUserInfo info;
   obj_version user_version;
@@ -759,6 +825,10 @@ class MotrStore : public Store {
     MotrZone zone;
     RGWSyncModuleInstanceRef sync_module;
 
+    MotrMetaCache* obj_meta_cache;
+    MotrMetaCache* user_cache;
+    MotrMetaCache* bucket_inst_cache;
+
   public:
     CephContext *cctx;
     struct m0_client   *instance;
@@ -768,7 +838,11 @@ class MotrStore : public Store {
     struct m0_idx_dix_config dix_conf = {};
 
     MotrStore(CephContext *c): zone(this), cctx(c) {}
-    ~MotrStore() { ; }
+    ~MotrStore() {
+      delete obj_meta_cache;
+      delete user_cache;
+      delete bucket_inst_cache;
+    }
 
     virtual const char* get_name() const override {
       return "motr";
@@ -895,6 +969,11 @@ class MotrStore : public Store {
     int do_idx_op_by_name(string idx_name, enum m0_idx_opcode opcode,
                           string key_str, bufferlist &bl);
     int check_n_create_global_indices();
+
+    int init_metadata_cache(const DoutPrefixProvider *dpp, CephContext *cct);
+    MotrMetaCache* get_obj_meta_cache() {return obj_meta_cache;}
+    MotrMetaCache* get_user_cache() {return user_cache;}
+    MotrMetaCache* get_bucket_inst_cache() {return bucket_inst_cache;}
 };
 
 } // namespace rgw::sal
