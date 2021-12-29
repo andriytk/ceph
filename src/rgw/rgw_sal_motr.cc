@@ -1274,7 +1274,7 @@ int MotrObject::create_mobj(const DoutPrefixProvider *dpp, uint64_t sz)
   M0_ASSERT(lid > 0);
 
   M0_ASSERT(mobj == NULL);
-  mobj = new (struct m0_obj)();
+  mobj = new m0_obj();
   m0_obj_init(mobj, &store->container.co_realm, &fid, lid);
 
   struct m0_op *op = NULL;
@@ -1326,7 +1326,7 @@ int MotrObject::open_mobj(const DoutPrefixProvider *dpp)
     return -ENOENT;
 
   M0_ASSERT(mobj == NULL);
-  mobj = new (struct m0_obj);
+  mobj = new m0_obj();
   memset(mobj, 0, sizeof *mobj);
   m0_obj_init(mobj, &store->container.co_realm, &fid, store->conf.mc_layout_id);
 
