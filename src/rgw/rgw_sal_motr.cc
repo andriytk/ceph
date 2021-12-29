@@ -197,10 +197,6 @@ int MotrUser::create_bucket(const DoutPrefixProvider* dpp,
 
 int MotrUser::read_attrs(const DoutPrefixProvider* dpp, optional_yield y)
 {
-//    int ret;
-//    ret = store->getDB()->get_user(dpp, string("user_id"), "", info, &attrs,
-//        &objv_tracker);
-//    return ret;
   return 0;
 }
 
@@ -337,8 +333,6 @@ out:
 
 int MotrUser::remove_user(const DoutPrefixProvider* dpp, optional_yield y)
 {
-  //int ret = store->getDB()->remove_user(dpp, info, &objv_tracker);
-
   return 0;
 }
 
@@ -347,12 +341,6 @@ int MotrBucket::remove_bucket(const DoutPrefixProvider *dpp, bool delete_childre
   int ret;
 
   ret = load_bucket(dpp, y);
-  if (ret < 0)
-    return ret;
-
-  /* XXX: handle delete_children */
-
-  //ret = store->getDB()->remove_bucket(dpp, info);
 
   return ret;
 }
@@ -502,12 +490,8 @@ int MotrBucket::check_bucket_shards(const DoutPrefixProvider *dpp)
 
 int MotrBucket::chown(const DoutPrefixProvider *dpp, User* new_user, User* old_user, optional_yield y, const std::string* marker)
 {
-  int ret = 0;
-
-  //ret = store->getDB()->update_bucket(dpp, "owner", info, false, &(new_user->get_id()), nullptr, nullptr, nullptr);
-
   /* XXX: Update policies of all the bucket->objects with new user */
-  return ret;
+  return 0;
 }
 
 /* Make sure to call load_bucket() if you need it first */
@@ -531,25 +515,16 @@ int MotrBucket::check_quota(const DoutPrefixProvider *dpp, RGWQuotaInfo& user_qu
 
 int MotrBucket::merge_and_store_attrs(const DoutPrefixProvider *dpp, Attrs& new_attrs, optional_yield y)
 {
-  int ret = 0;
-
-  Bucket::merge_and_store_attrs(dpp, new_attrs, y);
+  int ret = Bucket::merge_and_store_attrs(dpp, new_attrs, y);
 
   /* XXX: handle has_instance_obj like in set_bucket_instance_attrs() */
-
-  //ret = store->getDB()->update_bucket(dpp, "attrs", info, false, nullptr, &new_attrs, nullptr, &get_info().objv_tracker);
 
   return ret;
 }
 
 int MotrBucket::try_refresh_info(const DoutPrefixProvider *dpp, ceph::real_time *pmtime)
 {
-  int ret = 0;
-
-//    ret = store->getDB()->load_bucket(dpp, string("name"), "", info, &attrs,
-//        pmtime, &bucket_version);
-
-  return ret;
+  return 0;
 }
 
 /* XXX: usage and stats not supported in the first pass */
@@ -611,8 +586,6 @@ int MotrBucket::set_acl(const DoutPrefixProvider *dpp, RGWAccessControlPolicy &a
 
   Attrs attrs = get_attrs();
   attrs[RGW_ATTR_ACL] = aclbl;
-
-//    ret = store->getDB()->update_bucket(dpp, "attrs", info, false, &(acl.get_owner().get_id()), &attrs, nullptr, nullptr);
 
   return ret;
 }
@@ -854,10 +827,6 @@ MotrObject::~MotrObject() {
 
 int MotrObject::set_obj_attrs(const DoutPrefixProvider* dpp, RGWObjectCtx* rctx, Attrs* setattrs, Attrs* delattrs, optional_yield y, rgw_obj* target_obj)
 {
-//    Attrs empty;
-//    Motr::Object op_target(store->getDB(),
-//        get_bucket()->get_info(), target_obj ? *target_obj : get_obj());
-//    return op_target.set_attrs(dpp, setattrs ? *setattrs : empty, delattrs);
   ldpp_dout(dpp, 20) << "DEBUG: MotrObject::set_obj_attrs()" << dendl;
   return 0;
 }
@@ -958,18 +927,12 @@ int MotrObject::omap_get_vals(const DoutPrefixProvider *dpp, const std::string& 
     std::map<std::string, bufferlist> *m,
     bool* pmore, optional_yield y)
 {
-//    Motr::Object op_target(store->getDB(),
-//        get_bucket()->get_info(), get_obj());
-//    return op_target.obj_omap_get_vals(dpp, marker, count, m, pmore);
   return 0;
 }
 
 int MotrObject::omap_get_all(const DoutPrefixProvider *dpp, std::map<std::string, bufferlist> *m,
     optional_yield y)
 {
-//    Motr::Object op_target(store->getDB(),
-//        get_bucket()->get_info(), get_obj());
-//    return op_target.obj_omap_get_all(dpp, m);
   return 0;
 }
 
@@ -977,18 +940,12 @@ int MotrObject::omap_get_vals_by_keys(const DoutPrefixProvider *dpp, const std::
     const std::set<std::string>& keys,
     Attrs* vals)
 {
-//    Motr::Object op_target(store->getDB(),
-//        get_bucket()->get_info(), get_obj());
-//    return op_target.obj_omap_get_vals_by_keys(dpp, oid, keys, vals);
   return 0;
 }
 
 int MotrObject::omap_set_val_by_key(const DoutPrefixProvider *dpp, const std::string& key, bufferlist& val,
     bool must_exist, optional_yield y)
 {
-//    Motr::Object op_target(store->getDB(),
-//        get_bucket()->get_info(), get_obj());
-//    return op_target.obj_omap_set_val_by_key(dpp, key, val, must_exist);
   return 0;
 }
 
@@ -2710,26 +2667,6 @@ int MotrStore::get_user_by_access_key(const DoutPrefixProvider *dpp, const std::
 
 int MotrStore::get_user_by_email(const DoutPrefixProvider *dpp, const std::string& email, optional_yield y, std::unique_ptr<User>* user)
 {
-//    RGWUserInfo uinfo;
-//    User *u;
-//    int ret = 0;
-//    RGWObjVersionTracker objv_tracker;
-//
-//    ret = getDB()->get_user(dpp, string("email"), email, uinfo, nullptr,
-//        &objv_tracker);
-//
-//    if (ret < 0)
-//      return ret;
-//
-//    u = new MotrUser(this, uinfo);
-//
-//    if (!u)
-//      return -ENOMEM;
-//
-//    u->get_version_tracker() = objv_tracker;
-//    user->reset(u);
-//
-//    return ret;
   return 0;
 }
 
@@ -2851,41 +2788,7 @@ void MotrStore::get_quota(RGWQuotaInfo& bucket_quota, RGWQuotaInfo& user_quota)
 
 int MotrStore::set_buckets_enabled(const DoutPrefixProvider *dpp, vector<rgw_bucket>& buckets, bool enabled)
 {
-  int ret = 0;
-
-//    vector<rgw_bucket>::iterator iter;
-//
-//    for (iter = buckets.begin(); iter != buckets.end(); ++iter) {
-//      rgw_bucket& bucket = *iter;
-//      if (enabled) {
-//        ldpp_dout(dpp, 20) << "enabling bucket name=" << bucket.name << dendl;
-//      } else {
-//        ldpp_dout(dpp, 20) << "disabling bucket name=" << bucket.name << dendl;
-//      }
-//
-//      RGWBucketInfo info;
-//      map<string, bufferlist> attrs;
-//      int r = getDB()->load_bucket(dpp, string("name"), "", info, &attrs,
-//          nullptr, nullptr);
-//      if (r < 0) {
-//        ldpp_dout(dpp, 0) << "NOTICE: load_bucket on bucket=" << bucket.name << " returned err=" << r << ", skipping bucket" << dendl;
-//        ret = r;
-//        continue;
-//      }
-//      if (enabled) {
-//        info.flags &= ~BUCKET_SUSPENDED;
-//      } else {
-//        info.flags |= BUCKET_SUSPENDED;
-//      }
-//
-//      r = getDB()->update_bucket(dpp, "info", info, false, nullptr, &attrs, nullptr, &info.objv_tracker);
-//      if (r < 0) {
-//        ldpp_dout(dpp, 0) << "NOTICE: put_bucket_info on bucket=" << bucket.name << " returned err=" << r << ", skipping bucket" << dendl;
-//        ret = r;
-//        continue;
-//      }
-//    }
-  return ret;
+  return 0;
 }
 
 int MotrStore::get_sync_policy_handler(const DoutPrefixProvider *dpp,
