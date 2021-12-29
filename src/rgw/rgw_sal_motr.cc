@@ -38,18 +38,24 @@ extern "C" {
 
 #define dout_subsys ceph_subsys_rgw
 
+using std::string;
+using std::map;
+using std::vector;
+using std::set;
+using std::list;
+
 static string mp_ns = RGW_OBJ_NS_MULTIPART;
 
 namespace rgw::sal {
+
+using ::ceph::encode;
+using ::ceph::decode;
 
 static std::string motr_global_indices[] = {
   RGW_MOTR_USERS_IDX_NAME,
   RGW_MOTR_BUCKET_INST_IDX_NAME,
   RGW_MOTR_BUCKET_HD_IDX_NAME
 };
-
-using ::ceph::encode;
-using ::ceph::decode;
 
 // TODO: properly handle the number of key/value pairs to get in
 // one query. Now the POC simply tries to retrieve all `max` number of pairs
