@@ -364,8 +364,6 @@ int radosgw_Main(int argc, const char **argv)
     rgw_store = "motr";
   }
 #endif
-  lsubdout(cct, rgw, 1) << "RGW CONF BACKEND STORE = " << config_store << dendl;
-  lsubdout(cct, rgw, 1) << "RGW BACKEND STORE = " << rgw_store << dendl;
 
   rgw::sal::Store* store =
     StoreManager::get_storage(&dp, g_ceph_context,

@@ -111,7 +111,6 @@ rgw::sal::Store* StoreManager::init_storage_provider(const DoutPrefixProvider* d
 
   if (svc.compare("motr") == 0) {
 #ifdef WITH_RADOSGW_MOTR
-    ldpp_dout(dpp, 0) << "newMotrStore()" << dendl;
     rgw::sal::Store* store = newMotrStore(cct);
     if (store == nullptr) {
       ldpp_dout(dpp, 0) << "newMotrStore() failed!" << dendl;
@@ -119,7 +118,6 @@ rgw::sal::Store* StoreManager::init_storage_provider(const DoutPrefixProvider* d
     }
 
     /* XXX: temporary - create testid user */
-    ldpp_dout(dpp, 0) << "Create testid and user for Motr" << dendl;
     rgw_user testid_user("tenant", "tester", "ns");
     std::unique_ptr<rgw::sal::User> user = store->get_user(testid_user);
     user->get_info().user_id = testid_user;
@@ -129,24 +127,24 @@ rgw::sal::Store* StoreManager::init_storage_provider(const DoutPrefixProvider* d
     user->get_info().access_keys["0555b35654ad1656d804"] = k1;
 
     ldpp_dout(dpp, 0) << "Store testid and user for Motr. User = " << user->get_info().user_id.id << dendl;
-    int r = user->store_user(dpp, null_yield, true);
-    if (r < 0) {
-      ldpp_dout(dpp, 0) << "ERROR: failed inserting testid user in dbstore error r=" << r << dendl;
+    int rc = user->store_user(dpp, null_yield, true);
+    if (rc < 0) {
+      ldpp_dout(dpp, 0) << "ERROR: failed inserting testid user in dbstore error rc=" << rc << dendl;
     }
 
     // Read user info and compare.
     rgw_user ruser("", "tester", "");
     std::unique_ptr<rgw::sal::User> suser = store->get_user(ruser);
     suser->get_info().user_id = ruser;
-    r = suser->load_user(dpp, null_yield);
-    if (r == 0) {
-      ldpp_dout(dpp, 0) << "Read and compare user info: " << dendl;
-      ldpp_dout(dpp, 0) << "User id = " << suser->get_info().user_id.id << dendl;
-      ldpp_dout(dpp, 0) << "User display name = " << suser->get_info().display_name << dendl;
-      ldpp_dout(dpp, 0) << "User email = " << suser->get_info().user_email << dendl;
-
-    } else
-      ldpp_dout(dpp, 0) << "ERROR: failed to load testid user in dbstore error r=" << r << dendl;
+    rc = suser->load_user(dpp, null_yield);
+    if (rc != 0) {
+      ldpp_dout(dpp, 0) << "ERROR: failed to load testid user in dbstore error rc=" << rc << dendl;
+    } else {
+      ldpp_dout(dpp, 20) << "Read and compare user info: " << dendl;
+      ldpp_dout(dpp, 20) << "User id = " << suser->get_info().user_id.id << dendl;
+      ldpp_dout(dpp, 20) << "User display name = " << suser->get_info().display_name << dendl;
+      ldpp_dout(dpp, 20) << "User email = " << suser->get_info().user_email << dendl;
+    }
 
     return store;
 #endif
