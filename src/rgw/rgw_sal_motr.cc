@@ -798,7 +798,7 @@ std::unique_ptr<LuaScriptManager> MotrStore::get_lua_script_manager()
 
 int MotrObject::get_obj_state(const DoutPrefixProvider* dpp, RGWObjectCtx* rctx, RGWObjState **_state, optional_yield y, bool follow_olh)
 {
-  if (state == NULL)
+  if (state == nullptr)
     state = new RGWObjState();
   *_state = state;
 
@@ -1259,7 +1259,7 @@ void MotrObject::obj_name_to_motr_fid(struct m0_uint128 *obj_fid)
 
 int MotrObject::create_mobj(const DoutPrefixProvider *dpp, uint64_t sz)
 {
-  if (mobj != NULL) {
+  if (mobj != nullptr) {
     ldpp_dout(dpp, 0) << "ERROR: object is already opened" << dendl;
     return -EINVAL;
   }
@@ -1270,16 +1270,16 @@ int MotrObject::create_mobj(const DoutPrefixProvider *dpp, uint64_t sz)
   snprintf(fid_str, ARRAY_SIZE(fid_str), U128X_F, U128_P(&fid));
   ldpp_dout(dpp, 20) << __func__ << ": sz=" << sz << " fid=" << fid_str << dendl;
 
-  int64_t lid = m0_layout_find_by_objsz(store->instance, NULL, sz);
+  int64_t lid = m0_layout_find_by_objsz(store->instance, nullptr, sz);
   M0_ASSERT(lid > 0);
 
-  M0_ASSERT(mobj == NULL);
+  M0_ASSERT(mobj == nullptr);
   mobj = new m0_obj();
   m0_obj_init(mobj, &store->container.co_realm, &fid, lid);
 
-  struct m0_op *op = NULL;
+  struct m0_op *op = nullptr;
   mobj->ob_entity.en_flags |= M0_ENF_META;
-  int rc = m0_entity_create(NULL, &mobj->ob_entity, &op);
+  int rc = m0_entity_create(nullptr, &mobj->ob_entity, &op);
   if (rc != 0) {
     this->close_mobj();
     ldpp_dout(dpp, 0) << "ERROR: m0_entity_create() failed: " << rc << dendl;
@@ -1325,12 +1325,12 @@ int MotrObject::open_mobj(const DoutPrefixProvider *dpp)
   if (meta.layout_id == 0)
     return -ENOENT;
 
-  M0_ASSERT(mobj == NULL);
+  M0_ASSERT(mobj == nullptr);
   mobj = new m0_obj();
   memset(mobj, 0, sizeof *mobj);
   m0_obj_init(mobj, &store->container.co_realm, &fid, store->conf.mc_layout_id);
 
-  struct m0_op *op = NULL;
+  struct m0_op *op = nullptr;
   mobj->ob_attr.oa_layout_id = meta.layout_id;
   mobj->ob_attr.oa_pver      = meta.pver;
   mobj->ob_entity.en_flags  |= M0_ENF_META;
@@ -1362,14 +1362,14 @@ int MotrObject::delete_mobj(const DoutPrefixProvider *dpp)
   int rc;
 
   // Open the object.
-  if (mobj == NULL) {
+  if (mobj == nullptr) {
     rc = this->open_mobj(dpp);
     if (rc < 0)
       return rc;
   }
 
   // Create an DELETE op and execute it (sync version).
-  struct m0_op *op = NULL;
+  struct m0_op *op = nullptr;
   mobj->ob_entity.en_flags |= M0_ENF_META;
   rc = m0_entity_delete(&mobj->ob_entity, &op);
   if (rc != 0) {
@@ -1394,10 +1394,10 @@ int MotrObject::delete_mobj(const DoutPrefixProvider *dpp)
 
 void MotrObject::close_mobj()
 {
-  if (mobj == NULL)
+  if (mobj == nullptr)
     return;
   m0_obj_fini(mobj);
-  delete mobj; mobj = NULL;
+  delete mobj; mobj = nullptr;
 }
 
 int MotrObject::write_mobj(const DoutPrefixProvider *dpp, bufferlist&& data, uint64_t offset)
@@ -1439,7 +1439,7 @@ int MotrObject::write_mobj(const DoutPrefixProvider *dpp, bufferlist&& data, uin
     ext.iv_vec.v_count[0] = bs;
     attr.ov_vec.v_count[0] = 0;
 
-    op = NULL;
+    op = nullptr;
     rc = m0_obj_op(this->mobj, M0_OC_WRITE, &ext, &buf, &attr, 0, 0, &op);
     if (rc != 0)
       goto out;
@@ -1506,7 +1506,7 @@ int MotrObject::read_mobj(const DoutPrefixProvider* dpp, int64_t off, int64_t en
     attr.ov_vec.v_count[0] = 0;
 
     // Read from Motr.
-    op = NULL;
+    op = nullptr;
     rc = m0_obj_op(this->mobj, M0_OC_READ, &ext, &buf, &attr, 0, 0, &op);
     ldpp_dout(dpp, 20) << "MotrObject::read_mobj(): init read op rc=" << rc << dendl;
     if (rc != 0)
@@ -1784,7 +1784,7 @@ unsigned MotrObject::get_optimal_bs(unsigned len)
 
   pver = m0_pool_version_find(&store->instance->m0c_pools_common,
                               &mobj->ob_attr.oa_pver);
-  M0_ASSERT(pver != NULL);
+  M0_ASSERT(pver != nullptr);
   struct m0_pdclust_attr *pa = &pver->pv_attr;
   uint64_t lid = M0_OBJ_LAYOUT_ID(meta.layout_id);
   unsigned unit_sz = m0_obj_layout_id_to_unit_size(lid);
@@ -1890,7 +1890,7 @@ int MotrAtomicWriter::write()
 
     left -= this->populate_bvec(bs, bi);
 
-    op = NULL;
+    op = nullptr;
     rc = m0_obj_op(obj.mobj, M0_OC_WRITE, &ext, &buf, &attr, 0, 0, &op);
     if (rc != 0)
       goto err;
@@ -2953,8 +2953,8 @@ int MotrStore::open_idx(struct m0_uint128 *id, bool create, struct m0_idx *idx)
     return 0; // nothing to do more
 
   // create index or make sure it's created
-  struct m0_op *op = NULL;
-  int rc = m0_entity_create(NULL, &idx->in_entity, &op);
+  struct m0_op *op = nullptr;
+  int rc = m0_entity_create(nullptr, &idx->in_entity, &op);
   if (rc != 0) {
     ldout(cctx, 0) << "ERROR: m0_entity_create() failed: " << rc << dendl;
     goto out;
@@ -2985,7 +2985,7 @@ int MotrStore::do_idx_op(struct m0_idx *idx, enum m0_idx_opcode opcode,
   int rc, rc_i;
   struct m0_bufvec k, v, *vp = &v;
   uint32_t flags = 0;
-  struct m0_op *op = NULL;
+  struct m0_op *op = nullptr;
 
   if (m0_bufvec_empty_alloc(&k, 1) != 0) {
     ldout(cctx, 0) << "ERROR: failed to allocate key bufvec" << dendl;
@@ -3005,7 +3005,7 @@ int MotrStore::do_idx_op(struct m0_idx *idx, enum m0_idx_opcode opcode,
     set_m0bufvec(&v, val);
 
   if (opcode == M0_IC_DEL)
-    vp = NULL;
+    vp = nullptr;
 
   if (opcode == M0_IC_PUT && update)
     flags |= M0_OIF_OVERWRITE;
@@ -3058,7 +3058,7 @@ int MotrStore::do_idx_next_op(struct m0_idx *idx,
   int nr_kvp = vals.size();
   int *rcs = new int[nr_kvp];
   struct m0_bufvec k, v;
-  struct m0_op *op = NULL;
+  struct m0_op *op = nullptr;
 
   rc = m0_bufvec_empty_alloc(&k, nr_kvp)?:
        m0_bufvec_empty_alloc(&v, nr_kvp);
@@ -3187,7 +3187,7 @@ int MotrStore::delete_motr_idx_by_name(string iname)
 {
   struct m0_idx idx;
   struct m0_uint128 idx_id;
-  struct m0_op *op = NULL;
+  struct m0_op *op = nullptr;
 
   index_name_to_motr_fid(iname, &idx_id);
   m0_idx_init(&idx, &container.co_realm, &idx_id);
@@ -3287,8 +3287,8 @@ int MotrStore::create_motr_idx_by_name(string iname)
   m0_idx_init(&idx, &container.co_realm, &id);
 
   // create index or make sure it's created
-  struct m0_op *op = NULL;
-  int rc = m0_entity_create(NULL, &idx.in_entity, &op);
+  struct m0_op *op = nullptr;
+  int rc = m0_entity_create(nullptr, &idx.in_entity, &op);
   if (rc != 0) {
     ldout(cctx, 0) << "ERROR: m0_entity_create() failed: " << rc << dendl;
     goto out;
@@ -3350,7 +3350,7 @@ void *newMotrStore(CephContext *cct)
     store->conf.mc_is_oostore     = true;
     // XXX: these params should be taken from config settings and
     // cct somehow?
-    store->instance = NULL;
+    store->instance = nullptr;
     const auto& proc_ep  = g_conf().get_val<std::string>("my_motr_endpoint");
     const auto& ha_ep    = g_conf().get_val<std::string>("motr_ha_endpoint");
     const auto& proc_fid = g_conf().get_val<std::string>("my_motr_fid");
@@ -3374,7 +3374,7 @@ void *newMotrStore(CephContext *cct)
       m0_trace_set_mmapped_buffer(false);
     }
 
-    store->instance = NULL;
+    store->instance = nullptr;
     rc = m0_client_init(&store->instance, &store->conf, true);
     if (rc != 0) {
       ldout(cct, 0) << "ERROR: m0_client_init() failed: " << rc << dendl;
