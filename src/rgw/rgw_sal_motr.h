@@ -21,7 +21,6 @@
 #include <map>
 #include <vector>
 #include <set>
-#include <list>
 
 extern "C" {
 #include "motr/config.h"

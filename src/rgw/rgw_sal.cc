@@ -84,8 +84,8 @@ rgw::sal::Store* StoreManager::init_storage_provider(const DoutPrefixProvider* d
     return store;
   }
 
-  if (svc.compare("dbstore") == 0) {
 #ifdef WITH_RADOSGW_DBSTORE
+  if (svc.compare("dbstore") == 0) {
     rgw::sal::Store* store = newDBStore(cct);
 
     if ((*(rgw::sal::DBStore*)store).set_run_lc_thread(use_lc_thread)
@@ -106,11 +106,11 @@ rgw::sal::Store* StoreManager::init_storage_provider(const DoutPrefixProvider* d
       ldpp_dout(dpp, 0) << "ERROR: failed inserting testid user in dbstore error r=" << r << dendl;
     }
     return store;
-#endif
   }
+#endif
 
-  if (svc.compare("motr") == 0) {
 #ifdef WITH_RADOSGW_MOTR
+  if (svc.compare("motr") == 0) {
     rgw::sal::Store* store = newMotrStore(cct);
     if (store == nullptr) {
       ldpp_dout(dpp, 0) << "newMotrStore() failed!" << dendl;
@@ -148,8 +148,8 @@ rgw::sal::Store* StoreManager::init_storage_provider(const DoutPrefixProvider* d
     }
 
     return store;
-#endif
   }
+#endif
 
   return nullptr;
 }
