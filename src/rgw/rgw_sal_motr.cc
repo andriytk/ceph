@@ -373,15 +373,15 @@ int MotrUser::store_user(const DoutPrefixProvider* dpp,
   bufferlist bl;
   struct MotrUserInfo muinfo;
   RGWUserInfo orig_info;
-  RGWObjVersionTracker objv_tracker = {};
-  obj_version& obj_ver = objv_tracker.read_version;
+  RGWObjVersionTracker objv_tr = {};
+  obj_version& obj_ver = objv_tr.read_version;
 
   ldpp_dout(dpp, 10) << "Store_user(): User = " << info.user_id.id << dendl;
   orig_info.user_id.id = info.user_id.id;
   // XXX: we open and close motr idx 2 times in this method:
   // 1) on load_user_from_idx() here and 2) on do_idx_op_by_name(PUT) below.
   // Maybe this can be optimised later somewhow.
-  int rc = load_user_from_idx(dpp, store, orig_info, nullptr, &objv_tracker);
+  int rc = load_user_from_idx(dpp, store, orig_info, nullptr, &objv_tr);
   ldpp_dout(dpp, 10) << "Get user: rc = " << rc << dendl;
 
   // Check if the user already exists
@@ -389,7 +389,7 @@ int MotrUser::store_user(const DoutPrefixProvider* dpp,
     if (old_info)
       *old_info = orig_info;
 
-    if (objv_tracker.read_version.ver != obj_ver.ver) {
+    if (obj_ver.ver != objv_tracker.read_version.ver) {
       rc = -ECANCELED;
       ldpp_dout(dpp, 0) << "ERROR: User Read version mismatch" << dendl;
       goto out;
@@ -1037,7 +1037,7 @@ bool MotrObject::is_expired() {
 // Taken from rgw_rados.cc
 void MotrObject::gen_rand_obj_instance_name()
 {
-#define OBJ_INSTANCE_LEN 32
+  enum {OBJ_INSTANCE_LEN = 32};
   char buf[OBJ_INSTANCE_LEN + 1];
 
   gen_rand_alphanumeric_no_underscore(store->ctx(), buf, OBJ_INSTANCE_LEN);

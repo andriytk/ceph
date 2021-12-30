@@ -196,10 +196,6 @@ class MotrUser : public User {
         std::map<rgw_user_bucket, rgw_usage_log_entry>& usage) override;
     virtual int trim_usage(const DoutPrefixProvider *dpp, uint64_t start_epoch, uint64_t end_epoch) override;
 
-    /* Placeholders */
-    int load_user_from_motr_idx(const DoutPrefixProvider *dpp,
-                                RGWUserInfo& info, std::map<std::string, bufferlist> *attrs,
-                                RGWObjVersionTracker *objv_tracker);
     virtual int load_user(const DoutPrefixProvider* dpp, optional_yield y) override;
     virtual int store_user(const DoutPrefixProvider* dpp, optional_yield y, bool exclusive, RGWUserInfo* old_info = nullptr) override;
     virtual int remove_user(const DoutPrefixProvider* dpp, optional_yield y) override;
