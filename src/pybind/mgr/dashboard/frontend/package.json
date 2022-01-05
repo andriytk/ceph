@@ -109,7 +109,7 @@
     "@angular-devkit/build-angular": "0.1102.14",
     "@angular/cli": "11.2.14",
     "@angular/compiler-cli": "11.2.14",
-    "@angular/language-service": "11.2.14",
+    "@angular/language-service": "13.1.1",
     "@applitools/eyes-cypress": "3.22.0",
     "@compodoc/compodoc": "1.1.16",
     "@types/brace-expansion": "1.1.0",
