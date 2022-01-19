@@ -20,11 +20,14 @@
 #include <unistd.h>
 
 extern "C" {
+#pragma clang diagnostic push
+#pragma clang diagnostic ignored "-Wextern-c-compat"
 #include "motr/config.h"
 #include "lib/types.h"
 #include "lib/trace.h"   // m0_trace_set_mmapped_buffer
 #include "motr/layout.h" // M0_OBJ_LAYOUT_ID
 #include "helpers/helpers.h" // m0_ufid_next
+#pragma clang diagnostic pop
 }
 
 #include "common/Clock.h"

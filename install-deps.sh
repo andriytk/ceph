@@ -306,6 +306,7 @@ else
     [ $WITH_JAEGER ] && with_jaeger=true || with_jaeger=false
     [ $WITH_ZBD ] && with_zbd=true || with_zbd=false
     [ $WITH_PMEM ] && with_pmem=true || with_pmem=false
+    [ $WITH_RADOSGW_MOTR ] && with_rgw_motr=true || with_rgw_motr=false
     source /etc/os-release
     case "$ID" in
     debian|ubuntu|devuan|elementary|softiron)
@@ -362,6 +363,16 @@ else
 	      --tool="apt-get -y --no-install-recommends $backports" $control || exit 1
 	$SUDO env DEBIAN_FRONTEND=noninteractive apt-get -y remove ceph-build-deps
 	if [ "$control" != "debian/control" ] ; then rm $control; fi
+
+        # for rgw motr backend build checks
+        $for_make_check || $with_rgw_motr && {
+            motr_pkg='cortx-motr_2.0.0.git3252d623_amd64.deb'
+            motr_dev_pkg='cortx-motr-dev_2.0.0.git3252d623_amd64.deb'
+            motr_url='https://github.com/Seagate/cortx-motr/releases/download/2.0.0-rgw'
+            $SUDO curl -sL -o/var/cache/apt/archives/$motr_pkg $motr_url/$motr_pkg
+            $SUDO curl -sL -o/var/cache/apt/archives/$motr_dev_pkg $motr_url/$motr_dev_pkg
+            $SUDO apt-get install -y /var/cache/apt/archives/{$motr_pkg,$motr_dev_pkg}
+        }
         ;;
     rocky|centos|fedora|rhel|ol|virtuozzo)
         builddepcmd="dnf -y builddep --allowerasing"
@@ -397,6 +408,12 @@ else
         [ ${PIPESTATUS[0]} -ne 0 ] && exit 1
         IGNORE_YUM_BUILDEP_ERRORS="ValueError: SELinux policy is not managed or store cannot be accessed."
         sed "/$IGNORE_YUM_BUILDEP_ERRORS/d" $DIR/yum-builddep.out | grep -qi "error:" && exit 1
+        # for rgw motr backend build checks
+        $for_make_check || $with_rgw_motr && {
+            $SUDO dnf install -y \
+                  https://github.com/Seagate/cortx-motr/releases/download/2.0.0-rgw/isa-l-2.30.0-1.el7.x86_64.rpm \
+                  https://github.com/Seagate/cortx-motr/releases/download/2.0.0-rgw/cortx-motr-{,devel-}2.0.0-1_git3252d623_any.el8.x86_64.rpm
+        }
         ;;
     opensuse*|suse|sles)
         echo "Using zypper to install dependencies"
