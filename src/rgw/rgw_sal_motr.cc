@@ -179,7 +179,8 @@ inline std::string get_bucket_name(const std::string& tenant,  const std::string
 int static update_bucket_stats(const DoutPrefixProvider *dpp, MotrStore *store,
                                std::string owner, std::string bucket_name,
                                uint64_t size, uint64_t actual_size,
-                               uint64_t num_objects = 1, bool add_stats = true) {
+                               uint64_t num_objects = 1, bool add_stats = true)
+{
   uint64_t multiplier = add_stats ? 1 : -1;
   bufferlist bl;
   std::string user_stats_iname = "motr.rgw.user.stats." + owner;
@@ -2668,7 +2669,7 @@ int MotrObject::delete_mobj(const DoutPrefixProvider *dpp)
     ldpp_dout(dpp, 0) <<__func__<< ": ERROR: m0_entity_delete() failed. rc=" << rc << dendl;
     ADDB(RGW_ADDB_REQUEST_ID, addb_logger.get_id(),
          RGW_ADDB_FUNC_DELETE_MOBJ, RGW_ADDB_PHASE_ERROR);
-    return rc;
+    goto out;
   }
 
   ADDB(RGW_ADDB_REQUEST_TO_MOTR_ID, addb_logger.get_id(), m0_sm_id_get(&op->op_sm));
@@ -2679,18 +2680,18 @@ int MotrObject::delete_mobj(const DoutPrefixProvider *dpp)
   m0_op_free(op);
 
   if (rc < 0) {
-    ldpp_dout(dpp, 0) <<__func__<< ": ERROR: failed to open motr object. rc=" << rc << dendl;
+    ldpp_dout(dpp, 0) <<__func__<< ": ERROR: failed to delete motr object. rc=" << rc << dendl;
     ADDB(RGW_ADDB_REQUEST_ID, addb_logger.get_id(),
          RGW_ADDB_FUNC_DELETE_MOBJ, RGW_ADDB_PHASE_ERROR);
-    return rc;
+    goto out;
   }
 
   ADDB(RGW_ADDB_REQUEST_ID, addb_logger.get_id(),
        RGW_ADDB_FUNC_DELETE_MOBJ, RGW_ADDB_PHASE_DONE);
-
+out:
   this->close_mobj();
 
-  return 0;
+  return rc;
 }
 
 void MotrObject::close_mobj()
@@ -3057,7 +3058,7 @@ int MotrObject::get_bucket_dir_ent(const DoutPrefixProvider *dpp, rgw_bucket_dir
   if (this->get_key().have_null_instance())
     obj_key = this->get_name(); // drop "null" suffix
 
-  if (this->have_instance()) {
+  if (!bucket->get_info().versioned() || this->have_instance()) {
     // Check entry in the cache
     if (this->store->get_obj_meta_cache()->get(dpp, obj_key, bl) == 0) {
       bufferlist& blr = bl;
@@ -3643,6 +3644,7 @@ int MotrAtomicWriter::complete(size_t accounted_size, const std::string& etag,
     // and do_idx_op_by_name().
     rc = obj.update_version_entries(dpp);
     if (rc < 0)
+      // TODO: fix written data leakage with GC
       return rc;
   }
 
@@ -3653,10 +3655,12 @@ int MotrAtomicWriter::complete(size_t accounted_size, const std::string& etag,
   if (!info.versioning_enabled()) {
     std::unique_ptr<rgw::sal::Object> old_obj = obj.get_bucket()->get_object(rgw_obj_key(obj.get_name()));
     rgw::sal::MotrObject *old_mobj = static_cast<rgw::sal::MotrObject *>(old_obj.get());
-    rc = old_mobj->remove_null_obj(dpp);
+    rc = old_mobj->remove_null_obj(dpp); // TODO: do this via GC offline
     if (rc < 0) {
-      ldpp_dout(dpp, 0) <<__func__<< ": Failed to overwrite null object, rc : " << rc << dendl;
-      return rc;
+      ldpp_dout(dpp, 0) <<__func__<< ": Failed to overwrite null object, rc=" << rc << dendl;
+      // TODO: fix written data leakage with GC
+      // Note: this is not a critical issue, don't cancel the whole operation.
+      // The new null-version object will be put to the bucket index.
     }
   }
 
@@ -4252,7 +4256,7 @@ int MotrMultipartUpload::complete(const DoutPrefixProvider *dpp,
     int rc;
     rc = mobj_ver->remove_null_obj(dpp);
     if (rc < 0) {
-      ldpp_dout(dpp, 0) <<__func__<< ": Failed to overwrite null object, rc : " << rc << dendl;
+      ldpp_dout(dpp, 0) <<__func__<< ": Failed to overwrite null object, rc=" << rc << dendl;
       return rc;
     }
     ent.key.instance = target_obj->get_instance();
