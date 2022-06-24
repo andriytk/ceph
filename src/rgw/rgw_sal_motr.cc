@@ -1963,8 +1963,13 @@ int MotrObject::MotrDeleteOp::delete_obj(const DoutPrefixProvider* dpp, optional
           return rc;
       }
     } else {
-      // generate version-id for delete marker.
       result.delete_marker = true;
+      if (ent.is_delete_marker()) {
+        ldpp_dout(dpp, 20) << " delete-marker is already present, do nothing" << dendl;
+        result.version_id = ent.key.instance;
+        return 0;
+      }
+      // generate version-id for delete marker.
       source->gen_rand_obj_instance_name();
       std::string del_marker_ver_id = source->get_instance();
       result.version_id = del_marker_ver_id;
