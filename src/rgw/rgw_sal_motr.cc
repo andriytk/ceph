@@ -3867,7 +3867,7 @@ int MotrAtomicWriter::complete(size_t accounted_size, const std::string& etag,
   if (!info.versioning_enabled()) {
     std::unique_ptr<rgw::sal::Object> old_obj = obj.get_bucket()->get_object(rgw_obj_key(obj.get_name()));
     rgw::sal::MotrObject *old_mobj = static_cast<rgw::sal::MotrObject *>(old_obj.get());
-    rc = old_mobj->remove_null_obj(dpp); // TODO: do this via GC offline
+    rc = old_mobj->remove_null_obj(dpp); // TODO: do this offline via GC
     if (rc < 0) {
       ldpp_dout(dpp, LOG_ERROR) <<__func__<< ": ERROR: Failed to delete old null object, rc=" << rc << dendl;
       // TODO: fix written old obj data leakage with GC
